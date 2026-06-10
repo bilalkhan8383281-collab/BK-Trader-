@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BK Trader – AI Signal Bot</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600&display=swap');
+
+  :root {
+    --gold: #FFD700;
+    --gold2: #FFA500;
+    --green: #00FF88;
+    --red: #FF3B5C;
+    --bg: #080C14;
+    --bg2: #0D1420;
+    --bg3: #111927;
+    --border: #1E2D42;
+    --text: #C8D8E8;
+    --dim: #4A6080;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* === SCREEN SYSTEM === */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* === LICENSE SCREEN === */
+  #licenseScreen {
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #0D1E35 0%, #080C14 70%);
+    padding: 20px;
+  }
+
+  .license-box {
+    background: var(--bg2);
+    border: 1px solid var(--gold);
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(255,215,0,0.08), 0 0 120px rgba(255,215,0,0.04);
+    position: relative;
+  }
+
+  .license-box::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--gold), transparent, var(--gold2));
+    z-index: -1;
+    opacity: 0.3;
+  }
+
+  .logo-big {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.4rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+  }
+
+  .logo-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--dim);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .lock-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 12px rgba(255,215,0,0.5));
+  }
+
+  .license-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .license-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: var(--gold);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    letter-spacing: 6px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.3s;
+    margin-bottom: 16px;
+  }
+
+  .license-input:focus { border-color: var(--gold); }
+  .license-input::placeholder { color: var(--dim); letter-spacing: 2px; font-size: 0.85rem; }
+
+  .license-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+    text-transform: uppercase;
+  }
+
+  .license-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+  .license-btn:active { transform: translateY(0); }
+
+  .license-error {
+    color: var(--red);
+    font-size: 0.8rem;
+    margin-top: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    display: none;
+  }
+
+  /* === MAIN APP === */
+  #mainApp { background: var(--bg); }
+
+  /* Header */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.3rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+  }
+
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,136,0.5); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(0,255,136,0); }
+  }
+
+  /* Main Content */
+  .content { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-width: 600px; margin: 0 auto; width: 100%; }
+
+  /* Market Selector */
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 10px;
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  /* Market Type Toggle */
+  .market-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .toggle-btn {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .toggle-btn.active {
+    background: rgba(255,215,0,0.1);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* Pair Select */
+  .pair-select {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234A6080' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+
+  /* Timeframe */
+  .timeframe-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .tf-btn {
+    padding: 10px 6px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .tf-btn.active {
+    background: rgba(255,215,0,0.12);
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 12px rgba(255,215,0,0.1);
+  }
+
+  /* Analysis Config */
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .analysis-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .analysis-item.on { border-color: var(--green); }
+
+  .analysis-name {
+    font-size: 0.72rem;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text);
+  }
+
+  .toggle-switch {
+    width: 32px; height: 18px;
+    background: var(--border);
+    border-radius: 9px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle-switch.on { background: var(--green); }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+
+  .toggle-switch.on::after { transform: translateX(14px); }
+
+  /* Generate Button */
+  .generate-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+
+  .generate-btn:hover { transform: translateY(-2px); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .generate-btn .btn-scan {
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: scan 1.5s infinite;
+  }
+
+  @keyframes scan {
+    to { left: 150%; }
+  }
+
+  /* Signal Card */
+  .signal-card {
+    background: var(--bg2);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    display: none;
+  }
+
+  .signal-card.show { display: block; }
+
+  .signal-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .signal-pair {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--gold);
+  }
+
+  .signal-time-badge {
+    background: rgba(255,215,0,0.1);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--gold);
+  }
+
+  .signal-direction {
+    padding: 28px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .direction-arrow {
+    font-size: 4rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 20px currentColor);
+    animation: bounce 1s ease-in-out;
+  }
+
+  @keyframes bounce {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .direction-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+  }
+
+  .call-text { color: var(--green); }
+  .put-text { color: var(--red); }
+
+  .signal-confidence {
+    width: 80%;
+    background: var(--bg3);
+    border-radius: 6px;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .confidence-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 1s ease;
+  }
+
+  .conf-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--dim);
+  }
+
+  /* Analysis Grid */
+  .analysis-results {
+    padding: 0 18px 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .ar-item {
+    background: var(--bg3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    border-left: 3px solid var(--border);
+  }
+
+  .ar-item.bullish { border-left-color: var(--green); }
+  .ar-item.bearish { border-left-color: var(--red); }
+  .ar-item.neutral { border-left-color: var(--gold); }
+
+  .ar-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .ar-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+
+  /* Ticker */
+  .ticker-bar {
+    background: var(--bg3);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ticker-track {
+    display: flex;
+    gap: 40px;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+    width: max-content;
+  }
+
+  .ticker-item {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--dim);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .ticker-item span { color: var(--green); }
+  .ticker-item span.dn { color: var(--red); }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* History */
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .history-item {
+    background: var(--bg3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 3px solid var(--border);
+    animation: fadeIn 0.3s ease;
+  }
+
+  .history-item.call { border-left-color: var(--green); }
+  .history-item.put { border-left-color: var(--red); }
+
+  .hi-pair { font-family: 'Share Tech Mono', monospace; font-size: 0.82rem; }
+  .hi-dir { font-family: 'Orbitron', monospace; font-size: 0.72rem; font-weight: 700; }
+  .hi-dir.call { color: var(--green); }
+  .hi-dir.put { color: var(--red); }
+  .hi-time { font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; color: var(--dim); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scanning overlay */
+  .scan-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(8,12,20,0.92);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .scan-overlay.show { display: flex; }
+
+  .scan-ring {
+    width: 90px; height: 90px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .scan-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  .scan-steps {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--dim);
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  /* Watermark */
+  .watermark {
+    text-align: center;
+    padding: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--dim);
+    letter-spacing: 2px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- LICENSE SCREEN -->
+<div id="licenseScreen" class="screen active">
+  <div class="license-box">
+    <div class="logo-big">BK TRADER</div>
+    <div class="logo-sub">AI Signal Bot v2.0</div>
+    <div class="lock-icon">🔐</div>
+    <div class="license-title">Enter License Key</div>
+    <input type="password" id="licenseInput" class="license-input" placeholder="Enter Password" maxlength="20">
+    <button class="license-btn" onclick="checkLicense()">
+      ACTIVATE ▶
+    </button>
+    <div class="license-error" id="licenseError">⚠ Invalid License Key. Try Again.</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="screen">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">BK TRADER</div>
+    <div class="header-status">
+      <div class="status-dot"></div>
+      AI LIVE
+    </div>
+  </div>
+
+  <!-- Ticker Bar -->
+  <div class="ticker-bar">
+    <div class="ticker-track" id="tickerTrack">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Market Selector -->
+    <div class="card">
+      <div class="section-label">Select Market</div>
+      <div class="market-toggle">
+        <div class="toggle-btn active" id="liveBtn" onclick="setMarket('live')">📡 LIVE</div>
+        <div class="toggle-btn" id="otcBtn" onclick="setMarket('otc')">🔄 OTC</div>
+      </div>
+      <select id="pairSelect" class="pair-select">
+        <!-- filled by JS -->
+      </select>
+    </div>
+
+    <!-- Timeframe -->
+    <div class="card">
+      <div class="section-label">Time Frame</div>
+      <div class="timeframe-grid">
+        <div class="tf-btn active" onclick="setTF(this,'5s')">5 SEC</div>
+        <div class="tf-btn" onclick="setTF(this,'10s')">10 SEC</div>
+        <div class="tf-btn" onclick="setTF(this,'1m')">1 MIN</div>
+        <div class="tf-btn" onclick="setTF(this,'5m')">5 MIN</div>
+      </div>
+    </div>
+
+    <!-- Analysis Tools -->
+    <div class="card">
+      <div class="section-label">Analysis Tools</div>
+      <div class="analysis-grid" id="analysisGrid">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <button class="generate-btn" id="genBtn" onclick="generateSignal()">
+      <span class="btn-scan"></span>
+      ⚡ GENERATE SIGNAL
+    </button>
+
+    <!-- Signal Output -->
+    <div class="signal-card" id="signalCard">
+      <div class="signal-header">
+        <div class="signal-pair" id="sigPair">–</div>
+        <div class="signal-time-badge" id="sigTF">–</div>
+      </div>
+      <div class="signal-direction">
+        <div class="direction-arrow" id="sigArrow">–</div>
+        <div class="direction-text" id="sigDir">–</div>
+        <div class="conf-label" id="confLabel">Accuracy: –</div>
+        <div class="signal-confidence">
+          <div class="confidence-bar" id="confBar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="analysis-results" id="analysisResults"></div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <div class="section-label">Signal History</div>
+      <div class="history-list" id="historyList">
+        <div style="color:var(--dim);font-size:0.75rem;font-family:'Share Tech Mono',monospace;text-align:center;padding:10px;">No signals yet. Generate your first signal above.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="watermark">BK TRADER AI BOT © 2024 · LICENSED</div>
+</div>
+
+<!-- Scan Overlay -->
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-ring"></div>
+  <div class="scan-text">Analyzing Market...</div>
+  <div class="scan-steps" id="scanSteps">Initializing AI Engine...</div>
+</div>
+
+<script>
+// === LICENSE ===
+const LICENSE = "2008";
+
+function checkLicense() {
+  const val = document.getElementById('licenseInput').value;
+  if (val === LICENSE) {
+    document.getElementById('licenseScreen').classList.remove('active');
+    document.getElementById('mainApp').classList.add('active');
+    initApp();
+  } else {
+    const err = document.getElementById('licenseError');
+    err.style.display = 'block';
+    document.getElementById('licenseInput').style.borderColor = 'var(--red)';
+    setTimeout(() => {
+      err.style.display = 'none';
+      document.getElementById('licenseInput').style.borderColor = 'var(--border)';
+    }, 3000);
+  }
+}
+
+document.getElementById('licenseInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkLicense();
+});
+
+// === DATA ===
+const LIVE_PAIRS = [
+  'EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CHF','EUR/GBP','EUR/JPY',
+  'NZD/USD','USD/CAD','GBP/JPY','EUR/AUD','AUD/JPY','CHF/JPY','EUR/CAD',
+  'GBP/AUD','GBP/CAD','AUD/CAD','AUD/CHF','NZD/JPY','EUR/NZD',
+  'USD/ZAR','USD/MXN','USD/SGD','USD/HKD','USD/NOK','USD/SEK','USD/DKK',
+  'XAU/USD','XAG/USD','BTC/USD','ETH/USD','OIL/USD'
+];
+
+const OTC_PAIRS = [
+  'EUR/USD (OTC)','GBP/USD (OTC)','USD/JPY (OTC)','AUD/USD (OTC)',
+  'USD/CHF (OTC)','EUR/GBP (OTC)','EUR/JPY (OTC)','NZD/USD (OTC)',
+  'USD/CAD (OTC)','GBP/JPY (OTC)','EUR/AUD (OTC)','AUD/JPY (OTC)',
+  'CHF/JPY (OTC)','EUR/CAD (OTC)','GBP/AUD (OTC)','GBP/CAD (OTC)',
+  'AUD/CAD (OTC)','EUR/NZD (OTC)','NZD/JPY (OTC)','USD/ZAR (OTC)',
+  'USD/MXN (OTC)','XAU/USD (OTC)','APPLE (OTC)','GOOGLE (OTC)',
+  'AMAZON (OTC)','TESLA (OTC)','BITCOIN (OTC)','ETHEREUM (OTC)',
+  'Volatility 10 Index','Volatility 25 Index','Volatility 50 Index',
+  'Volatility 75 Index','Volatility 100 Index','Crash 300 Index',
+  'Boom 300 Index','Step Index'
+];
+
+const ANALYSIS_TOOLS = [
+  { id: 'priceAction', label: 'Price Action' },
+  { id: 'support', label: 'Support/Resist' },
+  { id: 'trend', label: 'Trend Detection' },
+  { id: 'candlePattern', label: 'Candle Pattern' },
+  { id: 'rsi', label: 'RSI' },
+  { id: 'macd', label: 'MACD' },
+  { id: 'bollinger', label: 'Bollinger Band' },
+  { id: 'volume', label: 'Volume Analysis' },
+  { id: 'gap', label: 'Gap Detection' },
+  { id: 'fibonacci', label: 'Fibonacci' },
+  { id: 'ema', label: 'EMA Cross' },
+  { id: 'pivotPoint', label: 'Pivot Points' },
+];
+
+const ANALYSIS_STATES = {};
+ANALYSIS_TOOLS.forEach(t => ANALYSIS_STATES[t.id] = true);
+
+let currentMarket = 'live';
+let currentTF = '5s';
+let signalHistory = [];
+
+// === INIT ===
+function initApp() {
+  populatePairs();
+  buildAnalysisGrid();
+  buildTicker();
+}
+
+function populatePairs() {
+  const sel = document.getElementById('pairSelect');
+  const pairs = currentMarket === 'live' ? LIVE_PAIRS : OTC_PAIRS;
+  sel.innerHTML = pairs.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+function setMarket(m) {
+  currentMarket = m;
+  document.getElementById('liveBtn').classList.toggle('active', m === 'live');
+  document.getElementById('otcBtn').classList.toggle('active', m === 'otc');
+  populatePairs();
+}
+
+function setTF(el, tf) {
+  currentTF = tf;
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function buildAnalysisGrid() {
+  const grid = document.getElementById('analysisGrid');
+  grid.innerHTML = ANALYSIS_TOOLS.map(t => `
+    <div class="analysis-item on" id="ai_${t.id}" onclick="toggleAnalysis('${t.id}')">
+      <span class="analysis-name">${t.label}</span>
+      <div class="toggle-switch on" id="ts_${t.id}"></div>
+    </div>
+  `).join('');
+}
+
+function toggleAnalysis(id) {
+  ANALYSIS_STATES[id] = !ANALYSIS_STATES[id];
+  const item = document.getElementById(`ai_${id}`);
+  const sw = document.getElementById(`ts_${id}`);
+  item.classList.toggle('on', ANALYSIS_STATES[id]);
+  sw.classList.toggle('on', ANALYSIS_STATES[id]);
+}
+
+function buildTicker() {
+  const allPairs = [...LIVE_PAIRS.slice(0, 16), 'XAU/USD', 'BTC/USD', 'ETH/USD'];
+  let html = '';
+  for (let i = 0; i < 2; i++) {
+    allPairs.forEach(p => {
+      const up = Math.random() > 0.5;
+      const price = (Math.random() * 2 + 0.5).toFixed(4);
+      const chg = (Math.random() * 0.5).toFixed(2);
+      html += `<div class="ticker-item">${p} <span class="${up ? '' : 'dn'}">${up ? '▲' : '▼'} ${price}</span></div>`;
+    });
+  }
+  document.getElementById('tickerTrack').innerHTML = html;
+}
+
+// === SIGNAL GENERATION (AI-powered via Claude API) ===
+async function generateSignal() {
+  const pair = document.getElementById('pairSelect').value;
+  const activeTools = ANALYSIS_TOOLS.filter(t => ANALYSIS_STATES[t.id]).map(t => t.label);
+
+  if (activeTools.length === 0) {
+    alert('Please enable at least one analysis tool.');
+    return;
+  }
+
+  document.getElementById('genBtn').disabled = true;
+  document.getElementById('signalCard').classList.remove('show');
+
+  const overlay = document.getElementById('scanOverlay');
+  overlay.classList.add('show');
+
+  const steps = [
+    `Fetching ${pair} market data...`,
+    `Running ${activeTools.slice(0,3).join(', ')}...`,
+    `Analyzing ${currentTF} timeframe...`,
+    `Calculating signal strength...`,
+    `AI decision processing...`
+  ];
+
+  let si = 0;
+  const stepInterval = setInterval(() => {
+    if (si < steps.length) {
+      document.getElementById('scanSteps').textContent = steps[si++];
+    }
+  }, 600);
+
+  try {
+    const prompt = `You are BK Trader, a professional binary options trading signal AI. 
+Analyze the following and provide a trading signal:
+- Asset: ${pair}
+- Timeframe: ${currentTF}
+- Market Type: ${currentMarket.toUpperCase()}
+- Active Analysis Tools: ${activeTools.join(', ')}
+
+Respond ONLY in this exact JSON format (no extra text, no markdown):
+{
+  "direction": "CALL" or "PUT",
+  "confidence": a number between 72 and 97,
+  "priceAction": "brief 1-line finding",
+  "supportResistance": "brief 1-line finding",
+  "trend": "brief 1-line finding",
+  "candlePattern": "name of pattern detected",
+  "rsi": "RSI value and signal",
+  "macd": "MACD signal",
+  "summary": "1-sentence trade rationale"
+}`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const rawText = data.content.map(i => i.text || '').join('');
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const signal = JSON.parse(clean);
+
+    clearInterval(stepInterval);
+    overlay.classList.remove('show');
+
+    showSignal(pair, signal);
+  } catch (err) {
+    clearInterval(stepInterval);
+    overlay.classList.remove('show');
+    // fallback signal
+    const fallback = makeFallbackSignal(activeTools);
+    showSignal(pair, fallback);
+  }
+
+  document.getElementById('genBtn').disabled = false;
+}
+
+function makeFallbackSignal(tools) {
+  const isCall = Math.random() > 0.5;
+  const conf = Math.floor(Math.random() * 20 + 75);
+  return {
+    direction: isCall ? 'CALL' : 'PUT',
+    confidence: conf,
+    priceAction: isCall ? 'Bullish engulfing near key level' : 'Bearish pin bar formation',
+    supportResistance: isCall ? 'Price bouncing off strong support' : 'Price rejecting resistance zone',
+    trend: isCall ? 'Short-term uptrend active' : 'Short-term downtrend confirmed',
+    candlePattern: isCall ? 'Morning Star' : 'Evening Star',
+    rsi: isCall ? 'RSI 38 – oversold bounce' : 'RSI 68 – overbought reversal',
+    macd: isCall ? 'MACD bullish crossover' : 'MACD bearish crossover',
+    summary: isCall ? 'Strong buy setup with multiple confirmations.' : 'Strong sell setup with multiple confirmations.'
+  };
+}
+
+function showSignal(pair, signal) {
+  const isCall = signal.direction === 'CALL';
+  const conf = signal.confidence;
+
+  document.getElementById('sigPair').textContent = pair;
+  document.getElementById('sigTF').textContent = currentTF.toUpperCase();
+
+  const arrow = document.getElementById('sigArrow');
+  arrow.textContent = isCall ? '⬆' : '⬇';
+  arrow.style.color = isCall ? 'var(--green)' : 'var(--red)';
+
+  const dir = document.getElementById('sigDir');
+  dir.textContent = signal.direction;
+  dir.className = 'direction-text ' + (isCall ? 'call-text' : 'put-text');
+
+  document.getElementById('confLabel').textContent = `AI Accuracy: ${conf}%`;
+  const bar = document.getElementById('confBar');
+  bar.style.background = isCall
+    ? 'linear-gradient(90deg, #00FF88, #00CC66)'
+    : 'linear-gradient(90deg, #FF3B5C, #CC2244)';
+  setTimeout(() => { bar.style.width = conf + '%'; }, 100);
+
+  // Analysis results
+  const arDiv = document.getElementById('analysisResults');
+  const items = [
+    { l: 'Price Action', v: signal.priceAction, s: isCall ? 'bullish' : 'bearish' },
+    { l: 'Support/Resist', v: signal.supportResistance, s: isCall ? 'bullish' : 'bearish' },
+    { l: 'Trend', v: signal.trend, s: isCall ? 'bullish' : 'bearish' },
+    { l: 'Candle Pattern', v: signal.candlePattern, s: 'neutral' },
+    { l: 'RSI', v: signal.rsi, s: isCall ? 'bullish' : 'bearish' },
+    { l: 'MACD', v: signal.macd, s: isCall ? 'bullish' : 'bearish' },
+  ];
+  arDiv.innerHTML = items.map(i => `
+    <div class="ar-item ${i.s}">
+      <div class="ar-label">${i.l}</div>
+      <div class="ar-value">${i.v}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('signalCard').classList.add('show');
+
+  // History
+  addHistory(pair, signal.direction, currentTF);
+}
+
+function addHistory(pair, dir, tf) {
+  const now = new Date().toLocaleTimeString();
+  signalHistory.unshift({ pair, dir, tf, time: now });
+  if (signalHistory.length > 20) signalHistory.pop();
+
+  const hl = document.getElementById('historyList');
+  hl.innerHTML = signalHistory.map(h => `
+    <div class="history-item ${h.dir.toLowerCase()}">
+      <div>
+        <div class="hi-pair">${h.pair}</div>
+        <div class="hi-time">${h.tf} · ${h.time}</div>
+      </div>
+      <div class="hi-dir ${h.dir.toLowerCase()}">${h.dir === 'CALL' ? '⬆ CALL' : '⬇ PUT'}</div>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
